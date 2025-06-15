@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Dictionary</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
+    button { margin: 10px; padding: 10px 20px; }
+    .hidden { display: none; }
+    #word-list div, #quiz-container div { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div class="ok">
+  <header>
+    <h1>📚 Daily Dictionary</h1>
+    <div id="progress"></div>
+  </header>
+
+  <main>
+    <section id="today-section">
+      <h2>Today's Words</h2>
+      <button id="generate-btn" disabled>Generate Words</button>
+      <div id="word-list"></div>
+      <button id="start-quiz-btn" class="hidden">Start Quiz</button>
+    </section>
+
+    <section id="quiz-section" class="hidden">
+      <h2>Quiz</h2>
+      <div id="quiz-container"></div>
+      <button id="submit-quiz">Submit Answers</button>
+      <div id="score-display"></div>
+    </section>
+
+    <section id="lookup-section">
+      <h2>Word Lookup</h2>
+      <input type="text" id="search-word" placeholder="Search a word...">
+      <div id="search-result"></div>
+    </section>
+  </main>
+  </div>
+
+    <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDLrADNXupcJcaqK33h87fYQZpE34R8kG0",
+        authDomain: "miragew1.firebaseapp.com",
+        databaseURL: "https://miragew1-default-rtdb.firebaseio.com",
+        projectId: "miragew1",
+        storageBucket: "miragew1.firebasestorage.app",
+        messagingSenderId: "942124713455",
+        appId: "1:942124713455:web:96069c6e6716e3ac63a21a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let DICTIONARY = [];
+    let todayWords = [];
+    const dateKey = new Date().toISOString().split('T')[0];
+
+    async function fetchDefinition(word) {
+        try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        const data = await res.json();
+        return data[0]?.meanings[0]?.definitions[0]?.definition || null;
+        } catch {
+        return null;
+        }
+    }
+
+    async function getValidWords(count) {
+        const validWords = [];
+        const shuffled = [...DICTIONARY].sort(() => 0.5 - Math.random());
+
+        for (const word of shuffled) {
+        const meaning = await fetchDefinition(word);
+        if (meaning) {
+            validWords.push({ word, meaning });
+        }
+        if (validWords.length === count) break;
+        }
+
+        return validWords;
+    }
+
+    async function displayWords(wordObjects) {
+        const container = document.getElementById('word-list');
+        container.innerHTML = '';
+        for (const { word, meaning } of wordObjects) {
+        const div = document.createElement('div');
+        div.textContent = `${word}: ${meaning}`;
+        container.appendChild(div);
+        }
+    }
+
+    document.getElementById('generate-btn').addEventListener('click', async () => {
+        const validWordObjects = await getValidWords(10);
+        todayWords = validWordObjects;
+        displayWords(todayWords);
+        document.getElementById('start-quiz-btn').classList.remove('hidden');
+    });
+
+    document.getElementById('start-quiz-btn').addEventListener('click', () => {
+        document.getElementById('quiz-section').classList.remove('hidden');
+        document.getElementById('word-list').innerHTML = ''; // Hide words before quiz
+
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+
+        todayWords.forEach(({ word, meaning }, i) => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <p>${i + 1}. ${meaning}</p>
+            <input type="text" data-word="${word}" placeholder="Your Answer">
+        `;
+        container.appendChild(div);
+        });
+    });
+
+    document.getElementById('submit-quiz').addEventListener('click', () => {
+        let score = 0;
+        const inputs = document.querySelectorAll('#quiz-container input');
+        inputs.forEach(input => {
+        if (input.value.trim().toLowerCase() === input.dataset.word.toLowerCase()) {
+            score++;
+        } else {
+            input.style.border = '2px solid red';
+            input.insertAdjacentHTML('afterend', `<span> ❌ Correct: ${input.dataset.word}</span>`);
+        }
+        });
+        document.getElementById('score-display').textContent = `You scored ${score}/10`;
+        db.collection('scores').doc(dateKey).set({ score });
+    });
+
+    document.getElementById('search-word').addEventListener('input', async (e) => {
+        const val = e.target.value.trim().toLowerCase();
+        if (!val) return;
+        const meaning = await fetchDefinition(val);
+        document.getElementById('search-result').textContent = meaning
+        ? `${val}: ${meaning}`
+        : `Definition not found.`;
+    });
+
+    async function loadDictionary() {
+        const res = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json');
+        const data = await res.json();
+        DICTIONARY = Object.keys(data);
+        document.getElementById('generate-btn').disabled = false;
+    }
+
+    loadDictionary();
+    </script>
+
+</body>
+</html>
