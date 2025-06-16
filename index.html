@@ -8,8 +8,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
-    button { margin: 20px; padding: 20px 20px; }
+    body { font-family: Arial, sans-serif; margin: 10px; background-color: #f7f7f7; }
+    button { margin: 10px; padding: 10px 10px; }
     .hidden { display: none; }
     #word-list div, #quiz-container div { margin: 5px 0; }
   </style>
@@ -97,7 +97,7 @@
     }
 
     document.getElementById('generate-btn').addEventListener('click', async () => {
-        const validWordObjects = await getValidWords(20);
+        const validWordObjects = await getValidWords(10);
         todayWords = validWordObjects;
         displayWords(todayWords);
         document.getElementById('start-quiz-btn').classList.remove('hidden');
@@ -131,7 +131,7 @@
             input.insertAdjacentHTML('afterend', `<span> ❌ Correct: ${input.dataset.word}</span>`);
         }
         });
-        document.getElementById('score-display').textContent = `You scored ${score}/20`;
+        document.getElementById('score-display').textContent = `You scored ${score}/10`;
         db.collection('scores').doc(dateKey).set({ score });
     });
 
