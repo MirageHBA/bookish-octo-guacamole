@@ -13,8 +13,8 @@ const wordList = [
   { word: "arduous", meaning: "Involving a lot of effort" }
 ];
 
-const today = new Date().toISOString().slice(0, 10);
-const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const today = new Date().toISOString().slice(0, 20);
+const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 20);
 
 const wordSection = document.getElementById("word-list");
 const quizSection = document.getElementById("quiz-section");
@@ -33,7 +33,7 @@ function setStorage(data) {
 
 function getRandomWords() {
   const shuffled = [...wordList].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 10);
+  return shuffled.slice(0, 20);
 }
 
 function displayTodayWords(words) {
